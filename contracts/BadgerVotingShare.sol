@@ -30,7 +30,7 @@ contract BadgerVotingShare {
     IGeyser constant geyser_badger_wBTC_SLP =
         IGeyser(0xB5b654efBA23596Ed49FAdE44F7e67E23D6712e7);
 
-    // Rari pool - fBAGER-22
+    // Rari pool - fBADGER-22
     ICToken constant fBADGER =
         ICToken(0x6780B4681aa8efE530d075897B3a4ff6cA5ed807);
 
