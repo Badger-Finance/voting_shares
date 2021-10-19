@@ -116,8 +116,8 @@ contract BadgerVotingShare {
          * check current rate
          * balanceOf fBadger
     */
-    function _rariBalanceOf(address _voter) internal view returns (uint256) {
-        uint256 rate = fBADGER.exchangeRateCurrent();
+    function _rariBalanceOf(address _voter) external view returns (uint256) {
+        uint256 rate = fBADGER.exchangeRateStored();
         return (fBADGER.balanceOf(_voter) * rate) / 1e18;
     }
 
@@ -125,8 +125,7 @@ contract BadgerVotingShare {
         return
             _badgerBalanceOf(_voter) +
             _uniswapBalanceOf(_voter) +
-            _sushiswapBalanceOf(_voter) +
-            _rariBalanceOf(_voter);
+            _sushiswapBalanceOf(_voter); //+_rariBalanceOf(_voter);
     }
 
     constructor() {}
