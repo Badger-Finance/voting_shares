@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "interfaces/IERC20.sol";
-import "interfaces/ISett.sol";
-import "interfaces/IGeyser.sol";
-import "interfaces/IUniswapV2Pair.sol";
-import "interfaces/ICToken.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/ISett.sol";
+import "./interfaces/IGeyser.sol";
+import "./interfaces/IUniswapV2Pair.sol";
+import "./interfaces/ICToken.sol";
 
 contract BadgerVotingShare {
     IERC20 constant badger = IERC20(0x3472A5A71965499acd81997a54BBA8D852C6E53d);
@@ -13,6 +13,7 @@ contract BadgerVotingShare {
         ISett(0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28);
     IGeyser constant geyser_badger =
         IGeyser(0xa9429271a28F8543eFFfa136994c0839E7d7bF77);
+    // ISett constant rem_badger = ISett();
 
     //Badger is token1
     IUniswapV2Pair constant badger_wBTC_UniV2 =
@@ -33,6 +34,8 @@ contract BadgerVotingShare {
     // Rari pool - fBADGER-22
     ICToken constant fBADGER =
         ICToken(0x6780B4681aa8efE530d075897B3a4ff6cA5ed807);
+
+    IERC20 constant aBADGER = IERC20(0x43298F9f91a4545dF64748e78a2c777c580573d6);
 
     function decimals() external pure returns (uint8) {
         return uint8(18);
@@ -96,19 +99,23 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter can have regular Badger in 3 configurations as well:
+        The voter can have regular Badger in 4 configurations as well:
          * Staked bBadger in Geyser
          * Unstaked bBadger (same as staked Badger in Sett)
          * Unstaked Badger
+         * remBADGER = Remediation Badger for December exploit
     */
     function _badgerBalanceOf(address _voter) internal view returns (uint256) {
         uint256 bBadgerPricePerShare = sett_badger.getPricePerFullShare();
+        // uint256 remBadgerPricePerShare = rem_badger.getPricePerFullShare();
         return
             badger.balanceOf(_voter) +
             (sett_badger.balanceOf(_voter) * bBadgerPricePerShare) /
             1e18 +
             (geyser_badger.totalStakedFor(_voter) * bBadgerPricePerShare) /
             1e18;
+            // (rem_badger.balanceOf(_voter) * remBadgerPricePerShare) / 
+            // 1e18;
     }
 
     /*
@@ -120,6 +127,19 @@ contract BadgerVotingShare {
         uint256 rate = fBADGER.exchangeRateStored();
         return (fBADGER.balanceOf(_voter) * rate) / 1e18;
     }
+
+    /*
+        The voter may have deposited BADGER into the across pool:
+        * (liquidReserves() + utilizedReserves() - undistributedLpFees()) / totalSupply * balanceOf(user)
+    */
+    // function _acrossBalanceOf(address _voter) internal view returns (uint256) {
+    //     uint256 liquidReserves = aBADGER.liquidReserves();
+    //     uint256 utilizedReserves = aBADGER.utilizedReserves();
+    //     uint256 undistributedLpFees = aBADGER.undistributedLpFees();
+    //     uint256 totalSupply = aBADGER.totalSupply();
+        
+    //     return (liquidReserves + utilizedReserves - undistributedLpFees) / totalSupply * aBADGER.balanceOf(_voter) / 1e18;
+    // }
 
     function balanceOf(address _voter) external view returns (uint256) {
         return
