@@ -85,8 +85,7 @@ def prep_mint_fDigg(digg_whale, random_digg_depositor, digg, fDigg):
     print(f"Digg balance: {digg.balanceOf(random_digg_depositor)}")
 
 
-@pytest.fixture(scope="module")
-def prep_mint_sushi(digg_whale, random_digg_depositor, digg, wBTC, digg_wBTC_SLP, sushi_router):
+def univ2_deposit(lp_pair, token0, token1, router, depositor, whale):
     test_amount_digg = Wei(1 * 1e9)
     test_amount_wbtc = Wei(1 * 1e8)
     # 25% slippage for depositing
@@ -94,51 +93,7 @@ def prep_mint_sushi(digg_whale, random_digg_depositor, digg, wBTC, digg_wBTC_SLP
 
     # get sushi LP reserves to see deposit ratio
     # token0 = wBTC, token1 = digg
-    (reserve0, reserve1, _) = digg_wBTC_SLP.getReserves()
-    wbtc_to_digg_ratio = (reserve0 / 1e8) / (reserve1 / 1e9)
-    print(f'wbtc_to_digg_ratio: {wbtc_to_digg_ratio}')
-    if (wbtc_to_digg_ratio > 1):
-        test_amount_digg = floor(test_amount_digg / wbtc_to_digg_ratio)
-    elif (wbtc_to_digg_ratio < 1):
-        test_amount_wbtc = floor(test_amount_wbtc * wbtc_to_digg_ratio)
-    
-    print(f"Depositing {test_amount_wbtc} WBTC and {test_amount_digg} DIGG")
-
-    now = datetime.now()
-    deadline = now + timedelta(minutes=30)
-    deadline_unix = deadline.timestamp()
-    min_digg = test_amount_digg * slippage
-    min_wbtc = test_amount_wbtc * slippage
-
-
-    print(f"Transferring: {test_amount_digg} = {test_amount_digg / 1e9} DIGG")
-    #  transfer 1 DIGG to deposit
-    digg.transfer(random_digg_depositor, test_amount_digg * 10, {"from": digg_whale})
-    print(f"Transferred: {test_amount_digg} DIGG {digg.balanceOf(random_digg_depositor)}")
-    # transfer 1 wBTC to deposit
-    wBTC.transfer(random_digg_depositor, test_amount_wbtc * 10, {"from": digg_whale})
-    print(f"Transferred: {test_amount_wbtc} wBTC {wBTC.balanceOf(random_digg_depositor)}")
-
-    # approve DIGG for SLP deposit
-    digg.approve(sushi_router, test_amount_digg, {"from": random_digg_depositor})
-    # approve wBTC for SLP deposit
-    wBTC.approve(sushi_router, test_amount_wbtc, {"from": random_digg_depositor})
-    # deposit
-    sushi_router.addLiquidity(wBTC, digg, test_amount_wbtc, test_amount_digg, min_wbtc, min_digg, random_digg_depositor, deadline_unix, {"from": random_digg_depositor})
-
-    print(f"Deposited to sushi, got {digg_wBTC_SLP.balanceOf(random_digg_depositor)} SLP")
-
-
-@pytest.fixture(scope="module")
-def prep_mint_uni(digg_whale, random_digg_depositor, digg, wBTC, digg_wBTC_UniV2, uni_router):
-    test_amount_digg = Wei(1 * 1e9)
-    test_amount_wbtc = Wei(1 * 1e8)
-    # 25% slippage for depositing
-    slippage = 0.75
-
-    # get sushi LP reserves to see deposit ratio
-    # token0 = wBTC, token1 = digg
-    (reserve0, reserve1, _) = digg_wBTC_UniV2.getReserves()
+    (reserve0, reserve1, _) = lp_pair.getReserves()
     wbtc_to_digg_ratio = (reserve0 / 1e8) / (reserve1 / 1e9)
     if (wbtc_to_digg_ratio > 1):
         test_amount_digg = floor(test_amount_digg / wbtc_to_digg_ratio)
@@ -157,19 +112,30 @@ def prep_mint_uni(digg_whale, random_digg_depositor, digg, wBTC, digg_wBTC_UniV2
 
     print(f"Transferring: {test_amount_digg} = {test_amount_digg / 1e9} DIGG")
     #  transfer 1 DIGG to deposit
-    digg.transfer(random_digg_depositor, test_amount_digg * 10, {"from": digg_whale})
-    print(f"Transferred: {test_amount_digg} DIGG {digg.balanceOf(random_digg_depositor)}")
+    token1.transfer(depositor, test_amount_digg * 10, {"from": whale})
+    print(f"Transferred: {test_amount_digg} DIGG {token1.balanceOf(depositor)}")
     # transfer 1 wBTC to deposit
-    wBTC.transfer(random_digg_depositor, test_amount_wbtc * 10, {"from": digg_whale})
-    print(f"Transferred: {test_amount_wbtc} wBTC {wBTC.balanceOf(random_digg_depositor)}")
+    token0.transfer(depositor, test_amount_wbtc * 10, {"from": whale})
+    print(f"Transferred: {test_amount_wbtc} wBTC {token0.balanceOf(depositor)}")
 
     # approve DIGG for SLP deposit
-    digg.approve(uni_router, test_amount_digg, {"from": random_digg_depositor})
+    token1.approve(router, test_amount_digg, {"from": depositor})
     # approve wBTC for SLP deposit
-    wBTC.approve(uni_router, test_amount_wbtc, {"from": random_digg_depositor})
+    token0.approve(router, test_amount_wbtc, {"from": depositor})
     # deposit
-    uni_router.addLiquidity(wBTC, digg, test_amount_wbtc, test_amount_digg, min_wbtc, min_digg, random_digg_depositor, deadline_unix, {"from": random_digg_depositor})
+    router.addLiquidity(token0, token1, test_amount_wbtc, test_amount_digg, min_wbtc, min_digg, depositor, deadline_unix, {"from": depositor})
 
+
+
+@pytest.fixture(scope="module")
+def prep_mint_sushi(digg_whale, random_digg_depositor, digg, wBTC, digg_wBTC_SLP, sushi_router):
+    univ2_deposit(digg_wBTC_SLP, wBTC, digg, sushi_router, random_digg_depositor, digg_whale)
+    print(f"Deposited to sushi, got {digg_wBTC_SLP.balanceOf(random_digg_depositor)} SLP")
+
+
+@pytest.fixture(scope="module")
+def prep_mint_uni(digg_whale, random_digg_depositor, digg, wBTC, digg_wBTC_UniV2, uni_router):
+    univ2_deposit(digg_wBTC_UniV2, wBTC, digg, uni_router, random_digg_depositor, digg_whale)
     print(f"Deposited to uni, got {digg_wBTC_UniV2.balanceOf(random_digg_depositor)} UniV2")
 
 
