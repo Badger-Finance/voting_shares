@@ -53,6 +53,19 @@ contract BadgerVotingShare {
         return badger.totalSupply();
     }
 
+    function uniswapBalanceOf(address _voter) external view returns(uint256) {
+        return _uniswapBalanceOf(_voter);
+    }
+    function sushiswapBalanceOf(address _voter) external view returns(uint256) {
+        return _sushiswapBalanceOf(_voter);
+    }
+    function badgerBalanceOf(address _voter) external view returns(uint256) {
+        return _badgerBalanceOf(_voter);
+    }
+    function rariBalanceOf(address _voter) external view returns(uint256) {
+        return _rariBalanceOf(_voter);
+    }
+
     /*
         The voter can have Badger in Uniswap in 3 configurations:
          * Staked bUni-V2 in Geyser
@@ -75,11 +88,11 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter can have Badger in Uniswap in 3 configurations:
-         * Staked bUni-V2 in Geyser
-         * Unstaked bUni-V2 (same as staked Uni-V2 in Sett)
-         * Unstaked Uni-V2
-        The top two correspond to more than 1 Uni-V2, so they are multiplied by pricePerFullShare.
+        The voter can have Badger in Sushi in 3 configurations:
+         * Staked SLP in Geyser
+         * Unstaked SLP (same as staked SLP in Sett)
+         * Unstaked SLP
+        The top two correspond to more than 1 SLP, so they are multiplied by pricePerFullShare.
         After adding all 3 balances we calculate how much BADGER it corresponds to using the pool's reserves.
     */
     function _sushiswapBalanceOf(address _voter)
