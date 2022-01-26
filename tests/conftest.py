@@ -82,6 +82,14 @@ def badger_sett(interface):
 def badger(interface):
     yield interface.IERC20("0x3472A5A71965499acd81997a54BBA8D852C6E53d")
 
+@pytest.fixture(scope="module")
+def remBadger(interface):
+    yield interface.ISett("0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22")
+
+@pytest.fixture(scope="module")
+def aBadger(interface):
+    yield interface.IBridgePool("0x43298F9f91a4545dF64748e78a2c777c580573d6")
+
 
 ########### HELPER FUNCTIONS ###########
 
@@ -218,3 +226,35 @@ def prep_mint_badger_uni(badger_whale, wbtc_whale, random_minter, badger, wBTC, 
 def prep_mint_badger_sushi(badger_whale, wbtc_whale, random_minter, badger, wBTC, badger_wBTC_SLP, sushi_router):
     univ2_deposit(badger_wBTC_SLP, wBTC, 1e8, badger, 1e18, 1, sushi_router, random_minter, {badger: badger_whale, wBTC: wbtc_whale})
     print(f"Deposited to sushi, got {badger_wBTC_SLP.balanceOf(random_minter)} SLP")
+
+@pytest.fixture(scope="module")
+def prep_mint_abadger(badger_whale, random_minter, badger, aBadger):
+    test_amount = 1 * 1e18
+    print(f"Transferring: {test_amount} = {test_amount / 1e18} BADGER")
+    #  transfer 1 BADGER to minter
+    badger.transfer(random_minter, test_amount, {"from": badger_whale})
+    print(f"Transferred: {test_amount} BADGER = {badger.balanceOf(random_minter)}")
+    # approve BADGER for deposit into vault
+    badger.approve(aBadger, test_amount, {"from": random_minter})
+    aBadger.addLiquidity(test_amount, {"from": random_minter})
+
+    print(f'Minted {aBadger.balanceOf(random_minter)} aBADGER')
+
+# Removed due to remBADGER having 0 ppfs currently
+# @pytest.fixture(scope="module")
+# def prep_remBadger(badger_whale, random_minter, badger, remBadger):
+#     test_amount = 1 * 1e18
+#     print(f"Transferring: {test_amount} = {test_amount / 1e18} BADGER")
+#     #  transfer 1 BADGER to minter
+#     badger.transfer(random_minter, test_amount, {"from": badger_whale})
+#     print(f"Transferred: {test_amount} BADGER = {badger.balanceOf(random_minter)}")
+
+#     # approve BADGER for deposit into vault
+#     badger.approve(remBadger, test_amount, {"from": random_minter})
+#     # deposit into vault
+#     remBadger.deposit(test_amount, {"from": random_minter})
+
+#     badger_sett_balance = remBadger.balanceOf(random_minter)
+#     print(f"bBadger received: {badger_sett_balance}")
+#     badger_ppfs = remBadger.getPricePerFullShare()
+#     print(f"Converts to: {badger_sett_balance / 1e18 * badger_ppfs / 1e18} deposited badger")
