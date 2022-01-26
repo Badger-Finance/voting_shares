@@ -119,7 +119,7 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter can have regular Badger in 4 configurations as well:
+        The voter can have regular Badger in 3 configurations as well:
          * Staked bBadger in Geyser
          * Unstaked bBadger (same as staked Badger in Sett)
          * Unstaked Badger
