@@ -69,7 +69,7 @@ contract BadgerVotingShare {
     function remBadgerBalanceOf(address _voter) external view returns(uint256) {
         return _remBadgerBalanceOf(_voter);
     }
-    function acrossBalanaceOf(address _voter) external view returns(uint256) {
+    function acrossBalanceOf(address _voter) external view returns(uint256) {
         return _acrossBalanceOf(_voter);
     }
 
