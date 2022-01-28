@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "interfaces/IERC20.sol";
-import "interfaces/ISett.sol";
-import "interfaces/IGeyser.sol";
-import "interfaces/IUniswapV2Pair.sol";
-import "interfaces/ICToken.sol";
+import "./interfaces/IERC20.sol";
+import "./interfaces/ISett.sol";
+import "./interfaces/IGeyser.sol";
+import "./interfaces/IUniswapV2Pair.sol";
+import "./interfaces/ICToken.sol";
+import "./interfaces/IBridgePool.sol";
 
 contract BadgerVotingShare {
     IERC20 constant badger = IERC20(0x3472A5A71965499acd81997a54BBA8D852C6E53d);
@@ -13,6 +14,7 @@ contract BadgerVotingShare {
         ISett(0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28);
     IGeyser constant geyser_badger =
         IGeyser(0xa9429271a28F8543eFFfa136994c0839E7d7bF77);
+    ISett constant rem_badger = ISett(0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22);
 
     //Badger is token1
     IUniswapV2Pair constant badger_wBTC_UniV2 =
@@ -34,6 +36,8 @@ contract BadgerVotingShare {
     ICToken constant fBADGER =
         ICToken(0x6780B4681aa8efE530d075897B3a4ff6cA5ed807);
 
+    IBridgePool constant aBADGER = IBridgePool(0x43298F9f91a4545dF64748e78a2c777c580573d6);
+
     function decimals() external pure returns (uint8) {
         return uint8(18);
     }
@@ -48,6 +52,25 @@ contract BadgerVotingShare {
 
     function totalSupply() external view returns (uint256) {
         return badger.totalSupply();
+    }
+
+    function uniswapBalanceOf(address _voter) external view returns(uint256) {
+        return _uniswapBalanceOf(_voter);
+    }
+    function sushiswapBalanceOf(address _voter) external view returns(uint256) {
+        return _sushiswapBalanceOf(_voter);
+    }
+    function badgerBalanceOf(address _voter) external view returns(uint256) {
+        return _badgerBalanceOf(_voter);
+    }
+    function rariBalanceOf(address _voter) external view returns(uint256) {
+        return _rariBalanceOf(_voter);
+    }
+    function remBadgerBalanceOf(address _voter) external view returns(uint256) {
+        return _remBadgerBalanceOf(_voter);
+    }
+    function acrossBalanaceOf(address _voter) external view returns(uint256) {
+        return _acrossBalanceOf(_voter);
     }
 
     /*
@@ -72,11 +95,11 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter can have Badger in Uniswap in 3 configurations:
-         * Staked bUni-V2 in Geyser
-         * Unstaked bUni-V2 (same as staked Uni-V2 in Sett)
-         * Unstaked Uni-V2
-        The top two correspond to more than 1 Uni-V2, so they are multiplied by pricePerFullShare.
+        The voter can have Badger in Sushi in 3 configurations:
+         * Staked SLP in Geyser
+         * Unstaked SLP (same as staked SLP in Sett)
+         * Unstaked SLP
+        The top two correspond to more than 1 SLP, so they are multiplied by pricePerFullShare.
         After adding all 3 balances we calculate how much BADGER it corresponds to using the pool's reserves.
     */
     function _sushiswapBalanceOf(address _voter)
@@ -112,6 +135,14 @@ contract BadgerVotingShare {
     }
 
     /*
+        The voter can also have remBADGER
+    */
+    function _remBadgerBalanceOf(address _voter) internal view returns (uint256) {
+        uint256 remBadgerPricePerShare = rem_badger.getPricePerFullShare();
+        return (rem_badger.balanceOf(_voter) * remBadgerPricePerShare) / 1e18;
+    }
+
+    /*
         The voter may have deposited BADGER into the rari pool:
          * check current rate
          * balanceOf fBadger
@@ -121,12 +152,24 @@ contract BadgerVotingShare {
         return (fBADGER.balanceOf(_voter) * rate) / 1e18;
     }
 
+    /*
+        The voter may have deposited BADGER into the across pool:
+    */
+    function _acrossBalanceOf(address _voter) internal view returns (uint256) {
+        int256 numerator = int256(aBADGER.liquidReserves()) + int256(aBADGER.utilizedReserves()) - int256(aBADGER.undistributedLpFees());
+        uint256 exchangeRateCurrent = (uint256(numerator) * 1e18) / aBADGER.totalSupply();
+        
+        return exchangeRateCurrent * aBADGER.balanceOf(_voter) / 1e18;
+    }
+
     function balanceOf(address _voter) external view returns (uint256) {
         return
             _badgerBalanceOf(_voter) +
             _uniswapBalanceOf(_voter) +
             _sushiswapBalanceOf(_voter) +
-            _rariBalanceOf(_voter);
+            _rariBalanceOf(_voter) +
+            _remBadgerBalanceOf(_voter) +
+            _acrossBalanceOf(_voter);
     }
 
     constructor() {}

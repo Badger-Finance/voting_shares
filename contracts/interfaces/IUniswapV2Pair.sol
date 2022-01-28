@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IUniswapV2Pair {
+    function token0() external pure returns (address);
+    function token1() external pure returns (address);
     function decimals() external pure returns (uint8);
 
     function totalSupply() external view returns (uint256);
