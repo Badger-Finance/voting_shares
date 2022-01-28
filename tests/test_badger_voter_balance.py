@@ -41,7 +41,7 @@ def test_sushi_voter_balance(prep_mint_badger_sushi, badger_voter, random_minter
 
 def test_abadger_mint(prep_mint_abadger, badger_voter, random_minter, aBadger):
     amount_deposited = 1
-    balance = badger_voter.acrossBalanaceOf(random_minter)
+    balance = badger_voter.acrossBalanceOf(random_minter)
     print(f'received balance of {balance}')
     balance_normalized = balance / 1e18
 
