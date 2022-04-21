@@ -7,6 +7,8 @@ import "./interfaces/IGeyser.sol";
 import "./interfaces/IUniswapV2Pair.sol";
 import "./interfaces/ICToken.sol";
 import "./interfaces/IBridgePool.sol";
+import "./interfaces/ICurvePool.sol";
+import "./interfaces/ICurveToken.sol";
 
 contract BadgerVotingShare {
     IERC20 constant badger = IERC20(0x3472A5A71965499acd81997a54BBA8D852C6E53d);
@@ -30,13 +32,20 @@ contract BadgerVotingShare {
     ISett constant sett_badger_wBTC_SLP =
         ISett(0x1862A18181346EBd9EdAf800804f89190DeF24a5);
     IGeyser constant geyser_badger_wBTC_SLP =
-        IGeyser(0xB5b654efBA23596Ed49FAdE44F7e67E23D6712e7);
+        IGeyser(0xB5b654efBA23596Ed49FAdE44F7e67E23D6712e7); 
 
     // Rari pool - fBADGER-22
     ICToken constant fBADGER =
         ICToken(0x6780B4681aa8efE530d075897B3a4ff6cA5ed807);
 
     IBridgePool constant aBADGER = IBridgePool(0x43298F9f91a4545dF64748e78a2c777c580573d6);
+
+    ICurvePool constant badger_wBTC_crv_pool =
+        ICurvePool(0x50f3752289e1456BfA505afd37B241bca23e685d);
+    ICurveToken constant badger_wBTC_crv_token = 
+        ICurveToken(0x137469B55D1f15651BA46A89D0588e97dD0B6562);
+    ISett constant sett_badger_wBTC_crv =
+        ISett(0xeC1c717A3b02582A4Aa2275260C583095536b613);
 
     function decimals() external pure returns (uint8) {
         return uint8(18);
@@ -71,6 +80,9 @@ contract BadgerVotingShare {
     }
     function acrossBalanceOf(address _voter) external view returns(uint256) {
         return _acrossBalanceOf(_voter);
+    }
+    function curveBalanceOf(address _voter) external view returns(uint256) {
+        return _curveBalanceOf(_voter);
     }
 
     /*
@@ -116,6 +128,27 @@ contract BadgerVotingShare {
                 bSLPPricePerShare) /
             1e18;
         return (totalSLPBalance * reserve1) / badger_wBTC_SLP.totalSupply();
+    }
+
+    /*
+        The voter can have Badger in Curve in 2 configurations:
+         * Curve LP in vault
+         * Curve LP in wallet
+        Vaults have an additional PPFS that we need to take into account
+        After adding the 2 balances we calculate how much BADGER it corresponds to using the pool's reserves.
+    */
+    function _curveBalanceOf(address _voter)
+        internal
+        view
+        returns (uint256)
+    {
+        // coin 0 is BADGER
+        uint256 bCrvPricePerShare = sett_badger_wBTC_crv.getPricePerFullShare();
+        uint256 poolBadgerBalance = badger_wBTC_crv_pool.balances(0);
+        uint256 voterLpBalance = badger_wBTC_crv_token.balanceOf(_voter) +
+            (sett_badger_wBTC_crv.balanceOf(_voter) * bCrvPricePerShare) /
+            1e18;
+        return voterLpBalance * poolBadgerBalance / badger_wBTC_crv_token.totalSupply();
     }
 
     /*
