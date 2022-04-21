@@ -1,14 +1,14 @@
 from brownie import Wei
 
 
-def test_rari_voter_balance(prep_mint_fDigg, digg_voter, random_digg_depositor):
-    amount_minted = 1
-    print(f"Amount minted: {amount_minted}")
-    balance = digg_voter.rariBalanceOf(random_digg_depositor)
-    balance_normalized = balance / 1e9
-    print(f"balance={balance_normalized}")
+# def test_rari_voter_balance(prep_mint_fDigg, digg_voter, random_digg_depositor):
+#     amount_minted = 1
+#     print(f"Amount minted: {amount_minted}")
+#     balance = digg_voter.rariBalanceOf(random_digg_depositor)
+#     balance_normalized = balance / 1e9
+#     print(f"balance={balance_normalized}")
 
-    assert abs(balance_normalized - amount_minted) < 1e-6
+#     assert abs(balance_normalized - amount_minted) < 1e-6
 
 def test_sushi_voter_balance(prep_mint_sushi, digg_voter, random_digg_depositor, digg_wBTC_SLP):
     (reserve0, reserve1, _) = digg_wBTC_SLP.getReserves()

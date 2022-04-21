@@ -1,6 +1,9 @@
+from decimal import Decimal
+from shutil import ExecError
 from brownie import Wei
 from datetime import datetime, timedelta
 import pytest
+from brownie.network.gas.strategies import ExponentialScalingStrategy
 
 
 ########### GENERAL FIXTURES ###########
@@ -8,7 +11,7 @@ import pytest
 @pytest.mark.require_network("mainnet-fork")
 @pytest.fixture(scope="module")
 def wbtc_whale(accounts):
-    return accounts.at("0x176f3dab24a159341c0509bb36b833e7fdd0a132", force=True)
+    return accounts.at("0xC564EE9f21Ed8A2d8E7e76c085740d5e4c5FaFbE", force=True)
 
 @pytest.mark.require_network("arb-main-fork")
 @pytest.fixture(scope="module")
@@ -36,7 +39,7 @@ def random_digg_depositor(accounts):
 @pytest.mark.require_network("mainnet-fork")
 @pytest.fixture(scope="module")
 def digg_whale(accounts):
-    return accounts.at("0x4a8651F2edD68850B944AD93f2c67af817F39F62", force=True)
+    return accounts.at("0xfed1CAe770ca1cD19D7bcC7Fa61d3325A9d5D164", force=True)
 
 @pytest.mark.require_network("mainnet-fork")
 @pytest.fixture(scope="module")
@@ -88,7 +91,7 @@ def random_minter(accounts):
 @pytest.mark.require_network("mainnet-fork")
 @pytest.fixture(scope="module")
 def badger_whale(accounts):
-    yield accounts.at("0x4441776e6A5D61fA024A5117bfc26b953Ad1f425", force=True)
+    yield accounts.at("0x34e2741a3F8483dBe5231F61C005110ff4B9F50A", force=True)
 
 @pytest.mark.require_network("arb-main-fork")
 @pytest.fixture(scope="module")
@@ -140,7 +143,22 @@ def aBadger(interface):
 def badger_wETH_swapr(interface):
     yield interface.IUniswapV2Pair("0x3C6bd88cdD2AECf466E22d4ED86dB6B8953FDb72")
 
-0xE9C12F06F8AFFD8719263FE4a81671453220389c
+@pytest.mark.require_network("mainnet-fork")
+@pytest.fixture(scope="module")
+def badger_wBTC_crv_pool(interface):
+    yield interface.ICurvePool("0x50f3752289e1456BfA505afd37B241bca23e685d")
+
+
+@pytest.mark.require_network("mainnet-fork")
+@pytest.fixture(scope="module")
+def badger_wBTC_crv_token(interface):
+    yield interface.ICurveToken("0x137469B55D1f15651BA46A89D0588e97dD0B6562")
+
+
+@pytest.mark.require_network("mainnet-fork")
+@pytest.fixture(scope="module")
+def badger_wBTC_crv_vault(interface):
+    yield interface.ISett("0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22")
 
 
 ########### HELPER FUNCTIONS ###########
@@ -167,18 +185,18 @@ def univ2_deposit(lp_pair, token0, token0_decimals, token1, token1_decimals, tok
     min_token0 = int(test_amount_token0 * slippage)
 
     #  transfer token1 to deposit
-    token1.transfer(depositor, test_amount_token1, {"from": whale[token1]})
+    token1.transfer(depositor, test_amount_token1, {"from": whale[token1], "gas_price": ExponentialScalingStrategy(7, 200)})
     print(f"Transferred: {test_amount_token1} token1 {token1.balanceOf(depositor)}")
     # transfer token0 to deposit
-    token0.transfer(depositor, test_amount_token0, {"from": whale[token0]})
+    token0.transfer(depositor, test_amount_token0, {"from": whale[token0], "gas_price": ExponentialScalingStrategy(7, 200)})
     print(f"Transferred: {test_amount_token0} token0 {token0.balanceOf(depositor)}")
 
     # approve token1 for deposit
-    token1.approve(router, test_amount_token1, {"from": depositor})
+    token1.approve(router, test_amount_token1, {"from": depositor, "gas_price": ExponentialScalingStrategy(7, 200)})
     # approve token0 for deposit
-    token0.approve(router, test_amount_token0, {"from": depositor})
+    token0.approve(router, test_amount_token0, {"from": depositor, "gas_price": ExponentialScalingStrategy(7, 200)})
     # deposit
-    router.addLiquidity(token0, token1, test_amount_token0, test_amount_token1, min_token0, min_token1, depositor, deadline_unix, {"from": depositor})
+    router.addLiquidity(token0, token1, test_amount_token0, test_amount_token1, min_token0, min_token1, depositor, deadline_unix, {"from": depositor, "gas_price": ExponentialScalingStrategy(7, 200)})
 
 
 ########### DIGG TEST SETUP ###########
@@ -188,13 +206,13 @@ def prep_mint_bDigg(digg_whale, random_digg_depositor, digg, digg_sett):
     test_amount = 1*1e9
     print(f"Transferring: {test_amount} = {test_amount / 1e9} DIGG")
     #  transfer 1 DIGG to minter
-    digg.transfer(random_digg_depositor, test_amount, {"from": digg_whale})
+    digg.transfer(random_digg_depositor, test_amount, {"from": digg_whale, "gas_price": ExponentialScalingStrategy(7, 200)})
     print(f"Transferred: {test_amount} DIGG {digg.balanceOf(random_digg_depositor)}")
 
     # approve DIGG for deposit into vault
-    digg.approve(digg_sett, test_amount, {"from": random_digg_depositor})
+    digg.approve(digg_sett, test_amount, {"from": random_digg_depositor, "gas_price": ExponentialScalingStrategy(7, 200)})
     # deposit into vault
-    digg_sett.deposit(test_amount, {"from": random_digg_depositor})
+    digg_sett.deposit(test_amount, {"from": random_digg_depositor, "gas_price": ExponentialScalingStrategy(7, 200)})
 
     digg_sett_balance = digg_sett.balanceOf(random_digg_depositor)
     print(f"bDIGG received: {digg_sett_balance}")
@@ -206,13 +224,13 @@ def prep_mint_fDigg(digg_whale, random_digg_depositor, digg, fDigg):
     test_amount = 1*1e9
     print(f"Transferring: {test_amount} = {test_amount / 1e9} DIGG")
     #  transfer 1 DIGG to minter
-    digg.transfer(random_digg_depositor, test_amount, {"from": digg_whale})
+    digg.transfer(random_digg_depositor, test_amount, {"from": digg_whale, "gas_price": ExponentialScalingStrategy(7, 200)})
     print(f"Transferred: {test_amount} DIGG {digg.balanceOf(random_digg_depositor)}")
 
     # approve DIGG for minting
-    digg.approve(fDigg, test_amount, {"from": random_digg_depositor})
+    digg.approve(fDigg, test_amount, {"from": random_digg_depositor, "gas_price": ExponentialScalingStrategy(7, 200)})
     # mint
-    fDigg.mint(test_amount, {"from": random_digg_depositor})
+    fDigg.mint(test_amount, {"from": random_digg_depositor, "gas_price": ExponentialScalingStrategy(7, 200)})
     # print Exchange Rate
     print(f"Exchange rate: {fDigg.exchangeRateStored()}")
     print(f"Amount Minted: {fDigg.balanceOf(random_digg_depositor)}")
@@ -230,7 +248,7 @@ def prep_mint_uni(digg_whale, wbtc_whale, random_digg_depositor, digg, wBTC, dig
 
 @pytest.fixture(scope="module")
 def digg_voter(DiggVotingShare, random_digg_depositor):
-    diggVotingShare = random_digg_depositor.deploy(DiggVotingShare)
+    diggVotingShare = DiggVotingShare.deploy({"from": random_digg_depositor, "gas_price": ExponentialScalingStrategy(7, 200)})
     return diggVotingShare
 
 
@@ -241,13 +259,13 @@ def prep_mint_bBadger(badger_whale, random_minter, badger, badger_sett):
     test_amount = 1 * 1e18
     print(f"Transferring: {test_amount} = {test_amount / 1e18} BADGER")
     #  transfer 1 BADGER to minter
-    badger.transfer(random_minter, test_amount, {"from": badger_whale})
+    badger.transfer(random_minter, test_amount, {"from": badger_whale, "gas_price": ExponentialScalingStrategy(7, 200)})
     print(f"Transferred: {test_amount} BADGER = {badger.balanceOf(random_minter)}")
 
     # approve BADGER for deposit into vault
-    badger.approve(badger_sett, test_amount, {"from": random_minter})
+    badger.approve(badger_sett, test_amount, {"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
     # deposit into vault
-    badger_sett.deposit(test_amount, {"from": random_minter})
+    badger_sett.deposit(test_amount, {"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
 
     badger_sett_balance = badger_sett.balanceOf(random_minter)
     print(f"bBadger received: {badger_sett_balance}")
@@ -259,27 +277,37 @@ def prep_mint_arb_badger(arb_badger_whale, random_minter, arb_badger):
     test_amount = 1 * 1e18
     print(f"Transferring: {test_amount} = {test_amount / 1e18} BADGER")
     #  transfer 1 BADGER to minter
-    arb_badger.transfer(random_minter, test_amount, {"from": arb_badger_whale})
+    arb_badger.transfer(random_minter, test_amount, {"from": arb_badger_whale, "gas_price": ExponentialScalingStrategy(7, 200)})
     print(f"Transferred: {test_amount} BADGER = {arb_badger.balanceOf(random_minter)}")
 
 @pytest.fixture(scope="module")
 def prep_mint_fBadger(badger_whale, random_minter, badger, fBadger):
-    test_amount = Wei("100 ether")
-    #  transfer from whale to 1000 BADGER
-    badger.transfer(random_minter, test_amount, {"from": badger_whale})
+    test_amount = 1e19
+    print(f"test amount: {test_amount}")
+    print(f"badger before: {badger.balanceOf(random_minter)}")
+    #  transfer from whale to 1 BADGER
+    badger.transfer(random_minter, test_amount, {"from": badger_whale, "gas_price": ExponentialScalingStrategy(7, 200)})
     # approve BADGER for minting
-    badger.approve(fBadger, test_amount, {"from": random_minter})
-    #  mint
-    fBadger.mint(test_amount, {"from": random_minter})
+    print(f"badger after: {badger.balanceOf(random_minter)}")
+    badger.approve(fBadger, test_amount, {"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
+    # mint
+    mint_sim = fBadger.mint.call(test_amount, {"from": random_minter})
+    print(f"mint sim: {mint_sim}")
+    try:
+        mint_return = fBadger.mint(test_amount / 2, {"from": random_minter})
+    except Exception as e:
+        print("error:", e)
+    print(f"mint return: {mint_return.return_value}")
+    print(f"fBadger minting: {fBadger.balanceOf(random_minter)}")
 
 @pytest.fixture(scope="module")
 def badger_voter(BadgerVotingShare, random_minter):
-    badgerVotingShare = random_minter.deploy(BadgerVotingShare)
+    badgerVotingShare = BadgerVotingShare.deploy({"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
     yield badgerVotingShare
 
 @pytest.fixture(scope="module")
 def arb_badger_voter(ArbBadgerVotingShare, random_minter):
-    badgerVotingShare = random_minter.deploy(ArbBadgerVotingShare)
+    badgerVotingShare = ArbBadgerVotingShare.deploy({"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
     yield badgerVotingShare
 
 @pytest.fixture(scope="module")
@@ -302,31 +330,41 @@ def prep_mint_abadger(badger_whale, random_minter, badger, aBadger):
     test_amount = 1 * 1e18
     print(f"Transferring: {test_amount} = {test_amount / 1e18} BADGER")
     #  transfer 1 BADGER to minter
-    badger.transfer(random_minter, test_amount, {"from": badger_whale})
+    badger.transfer(random_minter, test_amount, {"from": badger_whale, "gas_price": ExponentialScalingStrategy(7, 200)})
     print(f"Transferred: {test_amount} BADGER = {badger.balanceOf(random_minter)}")
     # approve BADGER for deposit into vault
-    badger.approve(aBadger, test_amount, {"from": random_minter})
-    aBadger.addLiquidity(test_amount, {"from": random_minter})
+    badger.approve(aBadger, test_amount, {"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
+    aBadger.addLiquidity(test_amount, {"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
 
     print(f'Minted {aBadger.balanceOf(random_minter)} aBADGER')
 
-# Removed due to remBADGER having 0 ppfs currently
-# @pytest.fixture(scope="module")
-# def prep_remBadger(badger_whale, random_minter, badger, remBadger):
-#     test_amount = 1 * 1e18
-#     print(f"Transferring: {test_amount} = {test_amount / 1e18} BADGER")
-#     #  transfer 1 BADGER to minter
-#     badger.transfer(random_minter, test_amount, {"from": badger_whale})
-#     print(f"Transferred: {test_amount} BADGER = {badger.balanceOf(random_minter)}")
+@pytest.fixture(scope="module")
+def prep_mint_curve(badger_whale, wbtc_whale, random_minter, badger, wBTC, badger_wBTC_crv_pool, badger_wBTC_crv_token):
+    test_amount_badger = Decimal(10 * 1e18)
+    badger_decimals = Decimal(1e18)
+    wbtc_decimals = Decimal(1e8)
+    # get current reserves to see deposit ratio
+    badger_balance = badger_wBTC_crv_pool.balances(0)
+    wbtc_balance = badger_wBTC_crv_pool.balances(1)
 
-#     # approve BADGER for deposit into vault
-#     badger.approve(remBadger, test_amount, {"from": random_minter})
-#     # deposit into vault
-#     remBadger.deposit(test_amount, {"from": random_minter})
+    badger_normalized = Decimal(badger_balance / 1e18)
+    wbtc_normalized = Decimal(wbtc_balance / 1e8)
 
-#     badger_sett_balance = remBadger.balanceOf(random_minter)
-#     print(f"bBadger received: {badger_sett_balance}")
-#     badger_ppfs = remBadger.getPricePerFullShare()
-#     print(f"Converts to: {badger_sett_balance / 1e18 * badger_ppfs / 1e18} deposited badger")
+    # We want to know how much token0 to deposit to maintain token1 levels
+    test_amount_wbtc = int(Decimal(test_amount_badger / badger_decimals) * (wbtc_normalized / badger_normalized) * wbtc_decimals)
 
+    badger.transfer(random_minter, test_amount_badger, {"from": badger_whale, "gas_price": ExponentialScalingStrategy(7, 200)})
+    print(f"Transferred: {test_amount_badger} token0 {badger.balanceOf(random_minter)}")
+    wBTC.transfer(random_minter, test_amount_wbtc, {"from": wbtc_whale, "gas_price": ExponentialScalingStrategy(7, 200)})
+    print(f"Transferred: {test_amount_wbtc} token0 {wBTC.balanceOf(random_minter)}")
 
+    badger.approve(badger_wBTC_crv_pool, int(test_amount_badger), {"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
+    wBTC.approve(badger_wBTC_crv_pool, test_amount_wbtc, {"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
+
+    now = datetime.now()
+    deadline = now + timedelta(minutes=30)
+    deadline_unix = deadline.timestamp()
+
+    badger_wBTC_crv_pool.add_liquidity([int(test_amount_badger), test_amount_wbtc], deadline_unix, {"from": random_minter, "gas_price": ExponentialScalingStrategy(7, 200)})
+
+    print(f"Deposited into curve pool: {badger_wBTC_crv_token.balanceOf(random_minter)}")
