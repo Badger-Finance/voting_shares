@@ -6,3 +6,5 @@ build/
 reports/
 venv/
 .vscode/
+node_modules/
+artifacts/
