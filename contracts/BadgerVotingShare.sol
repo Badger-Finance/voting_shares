@@ -202,7 +202,8 @@ contract BadgerVotingShare {
             _sushiswapBalanceOf(_voter) +
             _rariBalanceOf(_voter) +
             _remBadgerBalanceOf(_voter) +
-            _acrossBalanceOf(_voter);
+            _acrossBalanceOf(_voter) +
+            _curveBalanceOf(_voter);
     }
 
     constructor() {}
