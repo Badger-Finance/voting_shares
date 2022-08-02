@@ -141,8 +141,20 @@ def badger_wBTC_univ2(interface):
 
 @pytest.mark.require_network("mainnet-fork")
 @pytest.fixture(scope="module")
+def badger_wBTC_univ2_vault(interface):
+    return interface.ISett("0x235c9e24D3FB2FAFd58a2E49D454Fdcd2DBf7FF1")
+
+
+@pytest.mark.require_network("mainnet-fork")
+@pytest.fixture(scope="module")
 def badger_wBTC_SLP(interface):
     return interface.IUniswapV2Pair("0x110492b31c59716ac47337e616804e3e3adc0b4a")
+
+
+@pytest.mark.require_network("mainnet-fork")
+@pytest.fixture(scope="module")
+def badger_wBTC_SLP_vault(interface):
+    return interface.ISett("0x1862A18181346EBd9EdAf800804f89190DeF24a5")
 
 
 @pytest.mark.require_network("mainnet-fork")
@@ -191,6 +203,12 @@ def badger_wBTC_crv_pool(interface):
 @pytest.fixture(scope="module")
 def badger_wBTC_crv_token(interface):
     yield interface.ICurveToken("0x137469B55D1f15651BA46A89D0588e97dD0B6562")
+
+
+@pytest.mark.require_network("mainnet-fork")
+@pytest.fixture(scope="module")
+def badger_wBTC_crv_vault(interface):
+    yield interface.ISett("0xeC1c717A3b02582A4Aa2275260C583095536b613")
 
 
 @pytest.mark.require_network("mainnet-fork")
@@ -545,6 +563,7 @@ def prep_mint_badger_uni(
     badger,
     wBTC,
     badger_wBTC_univ2,
+    badger_wBTC_univ2_vault,
     uni_router,
 ):
     univ2_deposit(
@@ -558,7 +577,26 @@ def prep_mint_badger_uni(
         random_minter,
         {badger: badger_whale, wBTC: wbtc_whale},
     )
-    print(f"Deposited to uni, got {badger_wBTC_univ2.balanceOf(random_minter)} UniV2")
+    # Deposit into badger vault
+    balance = badger_wBTC_univ2.balanceOf(random_minter)
+    badger_wBTC_univ2.approve(
+        badger_wBTC_univ2_vault,
+        balance,
+        {
+            "from": random_minter,
+            "gas_price": ExponentialScalingStrategy(7, 200),
+        }
+    )
+    badger_wBTC_univ2_vault.deposit(
+        balance,
+        {
+            "from": random_minter,
+            "gas_price": ExponentialScalingStrategy(7, 200),
+        }
+    )
+    print(
+        f"Deposited to uni, got {badger_wBTC_univ2_vault.balanceOf(random_minter)} Badger Vault Tokens"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -593,6 +631,7 @@ def prep_mint_badger_sushi(
     badger,
     wBTC,
     badger_wBTC_SLP,
+    badger_wBTC_SLP_vault,
     sushi_router,
 ):
     univ2_deposit(
@@ -606,7 +645,25 @@ def prep_mint_badger_sushi(
         random_minter,
         {badger: badger_whale, wBTC: wbtc_whale},
     )
-    print(f"Deposited to sushi, got {badger_wBTC_SLP.balanceOf(random_minter)} SLP")
+    balance = badger_wBTC_SLP.balanceOf(random_minter)
+    badger_wBTC_SLP.approve(
+        badger_wBTC_SLP_vault,
+        balance,
+        {
+            "from": random_minter,
+            "gas_price": ExponentialScalingStrategy(7, 200),
+        }
+    )
+    badger_wBTC_SLP_vault.deposit(
+        balance,
+        {
+            "from": random_minter,
+            "gas_price": ExponentialScalingStrategy(7, 200),
+        }
+    )
+    print(
+        f"Deposited to sushi, got {badger_wBTC_SLP.balanceOf(random_minter)} Badger Vault Tokens"
+    )
 
 
 @pytest.fixture(scope="module")
@@ -649,6 +706,7 @@ def prep_mint_curve(
     wBTC,
     badger_wBTC_crv_pool,
     badger_wBTC_crv_token,
+    badger_wBTC_crv_vault
 ):
     test_amount_badger = Decimal(10 * 1e18)
     badger_decimals = Decimal(1e18)
@@ -710,8 +768,25 @@ def prep_mint_curve(
         },
     )
 
+    crv_balance = badger_wBTC_crv_token.balanceOf(random_minter)
     print(
         f"Deposited into curve pool: {badger_wBTC_crv_token.balanceOf(random_minter)}"
+    )
+
+    badger_wBTC_crv_token.approve(
+        badger_wBTC_crv_vault,
+        crv_balance,
+        {
+            "from": random_minter,
+            "gas_price": ExponentialScalingStrategy(7, 200),
+        }
+    )
+    badger_wBTC_crv_vault.deposit(
+        crv_balance,
+        {
+            "from": random_minter,
+            "gas_price": ExponentialScalingStrategy(7, 200),
+        }
     )
 
 
