@@ -9,6 +9,8 @@ import "./interfaces/ICToken.sol";
 import "./interfaces/IBridgePool.sol";
 import "./interfaces/ICurvePool.sol";
 import "./interfaces/ICurveToken.sol";
+import "./interfaces/IVault.sol";
+import "./interfaces/IBalancerPoolToken.sol";
 
 contract BadgerVotingShare {
     IERC20 constant badger = IERC20(0x3472A5A71965499acd81997a54BBA8D852C6E53d);
@@ -47,6 +49,13 @@ contract BadgerVotingShare {
     ISett constant sett_badger_wBTC_crv =
         ISett(0xeC1c717A3b02582A4Aa2275260C583095536b613);
 
+    // Balancer Vault
+    IVault constant balancer_vault = IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+    IBalancerPoolToken constant badger_wBTC_balancer = 
+        IBalancerPoolToken(0xb460DAa847c45f1C4a41cb05BFB3b51c92e41B36);
+    ISett constant sett_badger_wBTC_balancer =
+        ISett(0x63ad745506BD6a3E57F764409A47ed004BEc40b1);
+
     function decimals() external pure returns (uint8) {
         return uint8(18);
     }
@@ -84,20 +93,22 @@ contract BadgerVotingShare {
     function curveBalanceOf(address _voter) external view returns(uint256) {
         return _curveBalanceOf(_voter);
     }
+    function balancerBalanceOf(address _voter) external view returns(uint256) {
+        return _balancerBalanceOf(_voter);
+    }
 
     /*
-        The voter can have Badger in Uniswap in 3 configurations:
+        The voter can have Badger in Uniswap in 2 configurations:
          * Staked bUni-V2 in Geyser
          * Unstaked bUni-V2 (same as staked Uni-V2 in Sett)
-         * Unstaked Uni-V2
-        The top two correspond to more than 1 Uni-V2, so they are multiplied by pricePerFullShare.
-        After adding all 3 balances we calculate how much BADGER it corresponds to using the pool's reserves.
+        These correspond to more than 1 Uni-V2, so they are multiplied by pricePerFullShare.
+        After adding the balances we calculate how much BADGER it corresponds to using the pool's reserves.
     */
     function _uniswapBalanceOf(address _voter) internal view returns (uint256) {
         uint256 bUniV2PricePerShare = sett_badger_wBTC_UniV2
             .getPricePerFullShare();
         (, uint112 reserve1, ) = badger_wBTC_UniV2.getReserves();
-        uint256 totalUniBalance = badger_wBTC_UniV2.balanceOf(_voter) +
+        uint256 totalUniBalance =
             (sett_badger_wBTC_UniV2.balanceOf(_voter) * bUniV2PricePerShare) /
             1e18 +
             (geyser_badger_wBTC_UniV2.totalStakedFor(_voter) *
@@ -107,12 +118,11 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter can have Badger in Sushi in 3 configurations:
+        The voter can have Badger in Sushi in 2 configurations:
          * Staked SLP in Geyser
          * Unstaked SLP (same as staked SLP in Sett)
-         * Unstaked SLP
-        The top two correspond to more than 1 SLP, so they are multiplied by pricePerFullShare.
-        After adding all 3 balances we calculate how much BADGER it corresponds to using the pool's reserves.
+        These correspond to more than 1 SLP, so they are multiplied by pricePerFullShare.
+        After adding the balances we calculate how much BADGER it corresponds to using the pool's reserves.
     */
     function _sushiswapBalanceOf(address _voter)
         internal
@@ -121,7 +131,7 @@ contract BadgerVotingShare {
     {
         uint256 bSLPPricePerShare = sett_badger_wBTC_SLP.getPricePerFullShare();
         (, uint112 reserve1, ) = badger_wBTC_SLP.getReserves();
-        uint256 totalSLPBalance = badger_wBTC_SLP.balanceOf(_voter) +
+        uint256 totalSLPBalance = 
             (sett_badger_wBTC_SLP.balanceOf(_voter) * bSLPPricePerShare) /
             1e18 +
             (geyser_badger_wBTC_SLP.totalStakedFor(_voter) *
@@ -131,11 +141,9 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter can have Badger in Curve in 2 configurations:
+        The voter can have Badger in Curve in 1 configurations:
          * Curve LP in vault
-         * Curve LP in wallet
         Vaults have an additional PPFS that we need to take into account
-        After adding the 2 balances we calculate how much BADGER it corresponds to using the pool's reserves.
     */
     function _curveBalanceOf(address _voter)
         internal
@@ -145,8 +153,7 @@ contract BadgerVotingShare {
         // coin 0 is BADGER
         uint256 bCrvPricePerShare = sett_badger_wBTC_crv.getPricePerFullShare();
         uint256 poolBadgerBalance = badger_wBTC_crv_pool.balances(0);
-        uint256 voterLpBalance = badger_wBTC_crv_token.balanceOf(_voter) +
-            (sett_badger_wBTC_crv.balanceOf(_voter) * bCrvPricePerShare) /
+        uint256 voterLpBalance = (sett_badger_wBTC_crv.balanceOf(_voter) * bCrvPricePerShare) /
             1e18;
         return voterLpBalance * poolBadgerBalance / badger_wBTC_crv_token.totalSupply();
     }
@@ -195,6 +202,27 @@ contract BadgerVotingShare {
         return exchangeRateCurrent * aBADGER.balanceOf(_voter) / 1e18;
     }
 
+    /*
+        The voter may have Badger in the Badger/wBTC Balancer Vault
+        Vaults have an additional PPFS that we need to take into account
+    */
+    function _balancerBalanceOf(address _voter) internal view returns (uint256) {
+        bytes32 poolId = badger_wBTC_balancer.getPoolId();
+        (IERC20[] memory tokens, uint256[] memory balances,) = balancer_vault.getPoolTokens(poolId);
+        uint256 poolBadgerAmount = 0;
+        for(uint i = 0; i < tokens.length; i++) {
+            if (tokens[i] == badger) {
+                poolBadgerAmount = balances[i];
+                break;
+            }
+        }
+
+        uint256 voterVaultBalance = sett_badger_wBTC_balancer.balanceOf(_voter);
+        uint256 vaultPPFS = sett_badger_wBTC_balancer.getPricePerFullShare();
+
+        return voterVaultBalance * poolBadgerAmount / badger_wBTC_balancer.totalSupply() * vaultPPFS / 1e18;
+    }
+
     function balanceOf(address _voter) external view returns (uint256) {
         return
             _badgerBalanceOf(_voter) +
@@ -203,7 +231,8 @@ contract BadgerVotingShare {
             _rariBalanceOf(_voter) +
             _remBadgerBalanceOf(_voter) +
             _acrossBalanceOf(_voter) +
-            _curveBalanceOf(_voter);
+            _curveBalanceOf(_voter) +
+            _balancerBalanceOf(_voter);
     }
 
     constructor() {}

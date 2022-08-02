@@ -11,4 +11,8 @@ interface ISett {
     function getPricePerFullShare() external view returns (uint256);
 
     function deposit(uint256 _amount) external;
+
+    function transfer(address recipient, uint256 amount)
+        external
+        returns (bool);
 }
