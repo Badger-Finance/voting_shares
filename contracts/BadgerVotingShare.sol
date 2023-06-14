@@ -58,6 +58,10 @@ contract BadgerVotingShare {
         IBalancerPoolToken(0xb460DAa847c45f1C4a41cb05BFB3b51c92e41B36);
     ISett constant sett_badger_wBTC_balancer =
         ISett(0x63ad745506BD6a3E57F764409A47ed004BEc40b1);
+    IERC20 constant bptStakedBadgerWbtc =
+        IERC20(0x3F29e69955E5202759208DD0C5E0BA55ff934814);
+    IERC20 constant bptAuraBadgerWbtc =
+        IERC20(0xf9Ad7c6BAB11d9F483Fd40eE4170bf27F21D4C78);
 
     function decimals() external pure returns (uint8) {
         return uint8(18);
@@ -240,12 +244,24 @@ contract BadgerVotingShare {
             }
         }
 
+        uint256 bptTotalSupply = badger_wBTC_balancer.totalSupply();
+        uint256 voterBalance = badger_wBTC_balancer.balanceOf(_voter);
         uint256 voterVaultBalance = sett_badger_wBTC_balancer.balanceOf(_voter);
         uint256 vaultPPFS = sett_badger_wBTC_balancer.getPricePerFullShare();
 
-        return
-            (((voterVaultBalance * poolBadgerAmount) /
-                badger_wBTC_balancer.totalSupply()) * vaultPPFS) / 1e18;
+        uint256 bptVotes = (voterBalance * poolBadgerAmount) /
+            bptTotalSupply /
+            1e18;
+        uint256 bptStakedVotes = (bptStakedBadgerWbtc.balanceOf(_voter) *
+            poolBadgerAmount) / 1e18;
+        uint256 bptAuraVotes = (bptAuraBadgerWbtc.balanceOf(_voter) *
+            poolBadgerAmount) / 1e18;
+        uint256 bptSettVotes = (voterVaultBalance *
+            poolBadgerAmount *
+            vaultPPFS) /
+            bptTotalSupply /
+            1e18;
+        return bptVotes + bptStakedVotes + bptAuraVotes + bptSettVotes;
     }
 
     function balanceOf(address _voter) external view returns (uint256) {
