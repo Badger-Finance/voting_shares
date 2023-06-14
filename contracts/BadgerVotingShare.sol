@@ -54,6 +54,7 @@ contract BadgerVotingShare {
     // Balancer Vault
     IVault constant balancer_vault =
         IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+
     IBalancerPoolToken constant badger_wBTC_balancer =
         IBalancerPoolToken(0xb460DAa847c45f1C4a41cb05BFB3b51c92e41B36);
     ISett constant sett_badger_wBTC_balancer =
@@ -62,6 +63,13 @@ contract BadgerVotingShare {
         IERC20(0x3F29e69955E5202759208DD0C5E0BA55ff934814);
     IERC20 constant bptAuraBadgerWbtc =
         IERC20(0xf9Ad7c6BAB11d9F483Fd40eE4170bf27F21D4C78);
+
+    IBalancerPoolToken constant badgerRethBalancer =
+        IBalancerPoolToken(0x1ee442b5326009Bb18F2F472d3e0061513d1A0fF);
+    IERC20 constant bptStakedBadgerReth =
+        IERC20(0x87012b0C3257423fD74a5986F81a0f1954C17a1d);
+    IERC20 constant bptAuraBadgerReth =
+        IERC20(0x8990C02473B7Cd64b256A5F87fbA3F37bf67B3ae);
 
     function decimals() external pure returns (uint8) {
         return uint8(18);
@@ -227,10 +235,14 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter may have Badger in the Badger/wBTC Balancer Vault
-        Vaults have an additional PPFS that we need to take into account
+        The voter can have BadgerWbtc in Balancer in 4 configurations:
+         * Balancer BPT in wallet
+         * Balancer BPT in sett
+         * Balancer BPT in balancer gauge
+         * Balancer BPT in aura gauge
+        Setts have an additional PPFS that we need to take into account
     */
-    function _balancerBalanceOf(
+    function _balancerBadgerWbtcBalanceOf(
         address _voter
     ) internal view returns (uint256) {
         bytes32 poolId = badger_wBTC_balancer.getPoolId();
@@ -264,6 +276,40 @@ contract BadgerVotingShare {
         return bptVotes + bptStakedVotes + bptAuraVotes + bptSettVotes;
     }
 
+    /*
+        The voter can have BadgerWbtc in Balancer in 4 configurations:
+         * Balancer BPT in wallet
+         * Balancer BPT in balancer gauge
+         * Balancer BPT in aura gauge
+        Setts have an additional PPFS that we need to take into account
+    */
+    function _balancerBadgerRethBalanceOf(
+        address _voter
+    ) internal view returns (uint256) {
+        bytes32 poolId = badgerRethBalancer.getPoolId();
+        (IERC20[] memory tokens, uint256[] memory balances, ) = balancer_vault
+            .getPoolTokens(poolId);
+        uint256 poolBadgerAmount = 0;
+        for (uint i = 0; i < tokens.length; i++) {
+            if (tokens[i] == badger) {
+                poolBadgerAmount = balances[i];
+                break;
+            }
+        }
+
+        uint256 bptTotalSupply = badgerRethBalancer.totalSupply();
+        uint256 voterBalance = badgerRethBalancer.balanceOf(_voter);
+
+        uint256 bptVotes = (voterBalance * poolBadgerAmount) /
+            bptTotalSupply /
+            1e18;
+        uint256 bptStakedVotes = (bptStakedBadgerReth.balanceOf(_voter) *
+            poolBadgerAmount) / 1e18;
+        uint256 bptAuraVotes = (bptAuraBadgerReth.balanceOf(_voter) *
+            poolBadgerAmount) / 1e18;
+        return bptVotes + bptStakedVotes + bptAuraVotes;
+    }
+
     function balanceOf(address _voter) external view returns (uint256) {
         return
             _badgerBalanceOf(_voter) +
@@ -273,7 +319,8 @@ contract BadgerVotingShare {
             _remBadgerBalanceOf(_voter) +
             _acrossBalanceOf(_voter) +
             _curveBalanceOf(_voter) +
-            _balancerBalanceOf(_voter);
+            _balancerBadgerWbtcBalanceOf(_voter) +
+            _balancerBadgerRethBalanceOf(_voter);
     }
 
     constructor() {}
