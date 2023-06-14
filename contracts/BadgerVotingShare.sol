@@ -119,8 +119,16 @@ contract BadgerVotingShare {
         return _curveBalanceOf(_voter);
     }
 
-    function balancerBalanceOf(address _voter) external view returns (uint256) {
-        return _balancerBalanceOf(_voter);
+    function balancerBadgerWbtcBalanceOf(
+        address _voter
+    ) external view returns (uint256) {
+        return _balancerBadgerWbtcBalanceOf(_voter);
+    }
+
+    function balancerBadgerRethBalanceOf(
+        address _voter
+    ) external view returns (uint256) {
+        return _balancerBadgerRethBalanceOf(_voter);
     }
 
     /*
