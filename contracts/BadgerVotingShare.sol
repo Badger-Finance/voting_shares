@@ -18,7 +18,8 @@ contract BadgerVotingShare {
         ISett(0x19D97D8fA813EE2f51aD4B4e04EA08bAf4DFfC28);
     IGeyser constant geyser_badger =
         IGeyser(0xa9429271a28F8543eFFfa136994c0839E7d7bF77);
-    ISett constant rem_badger = ISett(0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22);
+    ISett constant rem_badger =
+        ISett(0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22);
 
     //Badger is token1
     IUniswapV2Pair constant badger_wBTC_UniV2 =
@@ -40,7 +41,8 @@ contract BadgerVotingShare {
     ICToken constant fBADGER =
         ICToken(0x6780B4681aa8efE530d075897B3a4ff6cA5ed807);
 
-    IBridgePool constant aBADGER = IBridgePool(0x43298F9f91a4545dF64748e78a2c777c580573d6);
+    IBridgePool constant aBADGER =
+        IBridgePool(0x43298F9f91a4545dF64748e78a2c777c580573d6);
 
     ICurvePool constant badger_wBTC_crv_pool =
         ICurvePool(0x50f3752289e1456BfA505afd37B241bca23e685d);
@@ -50,7 +52,8 @@ contract BadgerVotingShare {
         ISett(0xeC1c717A3b02582A4Aa2275260C583095536b613);
 
     // Balancer Vault
-    IVault constant balancer_vault = IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
+    IVault constant balancer_vault =
+        IVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
     IBalancerPoolToken constant badger_wBTC_balancer =
         IBalancerPoolToken(0xb460DAa847c45f1C4a41cb05BFB3b51c92e41B36);
     ISett constant sett_badger_wBTC_balancer =
@@ -72,32 +75,43 @@ contract BadgerVotingShare {
         return badger.totalSupply();
     }
 
-    function uniswapBalanceOf(address _voter) external view returns(uint256) {
+    function uniswapBalanceOf(address _voter) external view returns (uint256) {
         return _uniswapBalanceOf(_voter);
     }
-    function sushiswapBalanceOf(address _voter) external view returns(uint256) {
+
+    function sushiswapBalanceOf(
+        address _voter
+    ) external view returns (uint256) {
         return _sushiswapBalanceOf(_voter);
     }
-    function badgerBalanceOf(address _voter) external view returns(uint256) {
+
+    function badgerBalanceOf(address _voter) external view returns (uint256) {
         return _badgerBalanceOf(_voter);
     }
-    function rariBalanceOf(address _voter) external view returns(uint256) {
+
+    function rariBalanceOf(address _voter) external view returns (uint256) {
         return _rariBalanceOf(_voter);
     }
-    function remBadgerBalanceOf(address _voter) external view returns(uint256) {
+
+    function remBadgerBalanceOf(
+        address _voter
+    ) external view returns (uint256) {
         return _remBadgerBalanceOf(_voter);
     }
-    function acrossBalanceOf(address _voter) external view returns(uint256) {
+
+    function acrossBalanceOf(address _voter) external view returns (uint256) {
         return _acrossBalanceOf(_voter);
     }
-    function curveBalanceOf(address _voter) external view returns(uint256) {
+
+    function curveBalanceOf(address _voter) external view returns (uint256) {
         return _curveBalanceOf(_voter);
     }
-    function balancerBalanceOf(address _voter) external view returns(uint256) {
+
+    function balancerBalanceOf(address _voter) external view returns (uint256) {
         return _balancerBalanceOf(_voter);
     }
 
-	    /*
+    /*
         The voter can have Badger in Uniswap in 3 configurations:
          * Staked bUni-V2 in Geyser
          * Unstaked bUni-V2 (same as staked Uni-V2 in Sett)
@@ -118,7 +132,7 @@ contract BadgerVotingShare {
         return (totalUniBalance * reserve1) / badger_wBTC_UniV2.totalSupply();
     }
 
-	    /*
+    /*
         The voter can have Badger in Sushi in 3 configurations:
          * Staked SLP in Geyser
          * Unstaked SLP (same as staked SLP in Sett)
@@ -126,11 +140,9 @@ contract BadgerVotingShare {
         The top two correspond to more than 1 SLP, so they are multiplied by pricePerFullShare.
         After adding all 3 balances we calculate how much BADGER it corresponds to using the pool's reserves.
     */
-    function _sushiswapBalanceOf(address _voter)
-        internal
-        view
-        returns (uint256)
-    {
+    function _sushiswapBalanceOf(
+        address _voter
+    ) internal view returns (uint256) {
         uint256 bSLPPricePerShare = sett_badger_wBTC_SLP.getPricePerFullShare();
         (, uint112 reserve1, ) = badger_wBTC_SLP.getReserves();
         uint256 totalSLPBalance = badger_wBTC_SLP.balanceOf(_voter) +
@@ -141,6 +153,7 @@ contract BadgerVotingShare {
             1e18;
         return (totalSLPBalance * reserve1) / badger_wBTC_SLP.totalSupply();
     }
+
     /*
         The voter can have Badger in Curve in 2 configurations:
          * Curve LP in vault
@@ -148,18 +161,16 @@ contract BadgerVotingShare {
         Vaults have an additional PPFS that we need to take into account
         After adding the 2 balances we calculate how much BADGER it corresponds to using the pool's reserves.
     */
-    function _curveBalanceOf(address _voter)
-        internal
-        view
-        returns (uint256)
-    {
+    function _curveBalanceOf(address _voter) internal view returns (uint256) {
         // coin 0 is BADGER
         uint256 bCrvPricePerShare = sett_badger_wBTC_crv.getPricePerFullShare();
         uint256 poolBadgerBalance = badger_wBTC_crv_pool.balances(0);
         uint256 voterLpBalance = badger_wBTC_crv_token.balanceOf(_voter) +
             (sett_badger_wBTC_crv.balanceOf(_voter) * bCrvPricePerShare) /
             1e18;
-        return voterLpBalance * poolBadgerBalance / badger_wBTC_crv_token.totalSupply();
+        return
+            (voterLpBalance * poolBadgerBalance) /
+            badger_wBTC_crv_token.totalSupply();
     }
 
     /*
@@ -181,7 +192,9 @@ contract BadgerVotingShare {
     /*
         The voter can also have remBADGER
     */
-    function _remBadgerBalanceOf(address _voter) internal view returns (uint256) {
+    function _remBadgerBalanceOf(
+        address _voter
+    ) internal view returns (uint256) {
         uint256 remBadgerPricePerShare = rem_badger.getPricePerFullShare();
         return (rem_badger.balanceOf(_voter) * remBadgerPricePerShare) / 1e18;
     }
@@ -200,21 +213,27 @@ contract BadgerVotingShare {
         The voter may have deposited BADGER into the across pool:
     */
     function _acrossBalanceOf(address _voter) internal view returns (uint256) {
-        int256 numerator = int256(aBADGER.liquidReserves()) + int256(aBADGER.utilizedReserves()) - int256(aBADGER.undistributedLpFees());
-        uint256 exchangeRateCurrent = (uint256(numerator) * 1e18) / aBADGER.totalSupply();
+        int256 numerator = int256(aBADGER.liquidReserves()) +
+            int256(aBADGER.utilizedReserves()) -
+            int256(aBADGER.undistributedLpFees());
+        uint256 exchangeRateCurrent = (uint256(numerator) * 1e18) /
+            aBADGER.totalSupply();
 
-        return exchangeRateCurrent * aBADGER.balanceOf(_voter) / 1e18;
+        return (exchangeRateCurrent * aBADGER.balanceOf(_voter)) / 1e18;
     }
 
     /*
         The voter may have Badger in the Badger/wBTC Balancer Vault
         Vaults have an additional PPFS that we need to take into account
     */
-    function _balancerBalanceOf(address _voter) internal view returns (uint256) {
+    function _balancerBalanceOf(
+        address _voter
+    ) internal view returns (uint256) {
         bytes32 poolId = badger_wBTC_balancer.getPoolId();
-        (IERC20[] memory tokens, uint256[] memory balances,) = balancer_vault.getPoolTokens(poolId);
+        (IERC20[] memory tokens, uint256[] memory balances, ) = balancer_vault
+            .getPoolTokens(poolId);
         uint256 poolBadgerAmount = 0;
-        for(uint i = 0; i < tokens.length; i++) {
+        for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i] == badger) {
                 poolBadgerAmount = balances[i];
                 break;
@@ -224,7 +243,9 @@ contract BadgerVotingShare {
         uint256 voterVaultBalance = sett_badger_wBTC_balancer.balanceOf(_voter);
         uint256 vaultPPFS = sett_badger_wBTC_balancer.getPricePerFullShare();
 
-        return voterVaultBalance * poolBadgerAmount / badger_wBTC_balancer.totalSupply() * vaultPPFS / 1e18;
+        return
+            (((voterVaultBalance * poolBadgerAmount) /
+                badger_wBTC_balancer.totalSupply()) * vaultPPFS) / 1e18;
     }
 
     function balanceOf(address _voter) external view returns (uint256) {
