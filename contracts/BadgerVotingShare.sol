@@ -256,7 +256,7 @@ contract BadgerVotingShare {
         bytes32 poolId = badger_wBTC_balancer.getPoolId();
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancer_vault
             .getPoolTokens(poolId);
-        uint256 poolBadgerAmount = 0;
+        uint256 poolBadgerAmount;
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i] == badger) {
                 poolBadgerAmount = balances[i];
@@ -297,7 +297,7 @@ contract BadgerVotingShare {
         bytes32 poolId = badgerRethBalancer.getPoolId();
         (IERC20[] memory tokens, uint256[] memory balances, ) = balancer_vault
             .getPoolTokens(poolId);
-        uint256 poolBadgerAmount = 0;
+        uint256 poolBadgerAmount;
         for (uint i = 0; i < tokens.length; i++) {
             if (tokens[i] == badger) {
                 poolBadgerAmount = balances[i];
