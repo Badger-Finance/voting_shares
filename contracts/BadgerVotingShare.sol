@@ -285,7 +285,7 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter can have BadgerWbtc in Balancer in 4 configurations:
+        The voter can have BadgerReth in Balancer in 3 configurations:
          * Balancer BPT in wallet
          * Balancer BPT in balancer gauge
          * Balancer BPT in aura gauge
