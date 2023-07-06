@@ -62,14 +62,14 @@ contract BadgerVotingShare {
     IERC20 constant bptStakedBadgerWbtc =
         IERC20(0x3F29e69955E5202759208DD0C5E0BA55ff934814);
     IERC20 constant bptAuraBadgerWbtc =
-        IERC20(0xf9Ad7c6BAB11d9F483Fd40eE4170bf27F21D4C78);
+        IERC20(0xddf14A569dD91AF895E3B05d6dBCBB9db1c3834C);
 
     IBalancerPoolToken constant badgerRethBalancer =
         IBalancerPoolToken(0x1ee442b5326009Bb18F2F472d3e0061513d1A0fF);
     IERC20 constant bptStakedBadgerReth =
         IERC20(0x87012b0C3257423fD74a5986F81a0f1954C17a1d);
     IERC20 constant bptAuraBadgerReth =
-        IERC20(0x8990C02473B7Cd64b256A5F87fbA3F37bf67B3ae);
+        IERC20(0xAAd4eE162Dbc9C25cCa26bA4340B36E3eF7C1A80);
 
     function decimals() external pure returns (uint8) {
         return uint8(18);
