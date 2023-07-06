@@ -273,9 +273,13 @@ contract BadgerVotingShare {
             bptTotalSupply /
             1e18;
         uint256 bptStakedVotes = (bptStakedBadgerWbtc.balanceOf(_voter) *
-            poolBadgerAmount) / 1e18;
+            poolBadgerAmount) /
+            bptTotalSupply /
+            1e18;
         uint256 bptAuraVotes = (bptAuraBadgerWbtc.balanceOf(_voter) *
-            poolBadgerAmount) / 1e18;
+            poolBadgerAmount) /
+            bptTotalSupply /
+            1e18;
         uint256 bptSettVotes = (voterVaultBalance *
             poolBadgerAmount *
             vaultPPFS) /
@@ -312,9 +316,13 @@ contract BadgerVotingShare {
             bptTotalSupply /
             1e18;
         uint256 bptStakedVotes = (bptStakedBadgerReth.balanceOf(_voter) *
-            poolBadgerAmount) / 1e18;
+            poolBadgerAmount) /
+            bptTotalSupply /
+            1e18;
         uint256 bptAuraVotes = (bptAuraBadgerReth.balanceOf(_voter) *
-            poolBadgerAmount) / 1e18;
+            poolBadgerAmount) /
+            bptTotalSupply /
+            1e18;
         return bptVotes + bptStakedVotes + bptAuraVotes;
     }
 
