@@ -18,4 +18,6 @@ interface IUniswapV2Pair {
             uint112 reserve1,
             uint32 blockTimestampLast
         );
+    
+    function approve(address spender, uint256 amount) external returns (bool);
 }
