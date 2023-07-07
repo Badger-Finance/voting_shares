@@ -267,17 +267,17 @@ contract BadgerVotingShare {
         uint256 bptTotalSupply = badger_wBTC_balancer.totalSupply();
         uint256 voterBalance = badger_wBTC_balancer.balanceOf(_voter);
         uint256 voterVaultBalance = sett_badger_wBTC_balancer.balanceOf(_voter);
+        uint256 voterStakedBalance = bptStakedBadgerWbtc.balanceOf(_voter);
+        uint256 voterAuraBalance = bptAuraBadgerWbtc.balanceOf(_voter);
         uint256 vaultPPFS = sett_badger_wBTC_balancer.getPricePerFullShare();
 
         uint256 bptVotes = (voterBalance * poolBadgerAmount) /
             bptTotalSupply /
             1e18;
-        uint256 bptStakedVotes = (bptStakedBadgerWbtc.balanceOf(_voter) *
-            poolBadgerAmount) /
+        uint256 bptStakedVotes = (voterStakedBalance * poolBadgerAmount) /
             bptTotalSupply /
             1e18;
-        uint256 bptAuraVotes = (bptAuraBadgerWbtc.balanceOf(_voter) *
-            poolBadgerAmount) /
+        uint256 bptAuraVotes = (voterAuraBalance * poolBadgerAmount) /
             bptTotalSupply /
             1e18;
         uint256 bptSettVotes = (voterVaultBalance *
