@@ -278,7 +278,9 @@ contract BadgerVotingShare {
             bptTotalSupply;
         uint256 bptSettVotes = (voterVaultBalance *
             poolBadgerAmount *
-            vaultPPFS) / bptTotalSupply;
+            vaultPPFS) /
+            bptTotalSupply /
+            1e18;
         return bptVotes + bptStakedVotes + bptAuraVotes + bptSettVotes;
     }
 
