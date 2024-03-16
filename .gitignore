@@ -5,7 +5,6 @@ __pycache__
 build/
 reports/
 venv/
-.vscode/
 node_modules/
 artifacts/
 cache/
