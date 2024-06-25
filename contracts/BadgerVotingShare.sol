@@ -11,6 +11,7 @@ import "./interfaces/ICurvePool.sol";
 import "./interfaces/ICurveToken.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IBalancerPoolToken.sol";
+import "./interfaces/IBremBadger.sol";
 
 contract BadgerVotingShare {
     IERC20 constant badger = IERC20(0x3472A5A71965499acd81997a54BBA8D852C6E53d);
@@ -20,6 +21,8 @@ contract BadgerVotingShare {
         IGeyser(0xa9429271a28F8543eFFfa136994c0839E7d7bF77);
     ISett constant rem_badger =
         ISett(0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22);
+    IBremBadger constant bremBadger =
+        IBremBadger(0x170D9fA0Cb0226f0d87952905228e5AA7323DdA6);
 
     //Badger is token1
     IUniswapV2Pair constant badger_wBTC_UniV2 =
@@ -109,6 +112,12 @@ contract BadgerVotingShare {
         address _voter
     ) external view returns (uint256) {
         return _remBadgerBalanceOf(_voter);
+    }
+
+    function bremBadgerBalanceOf(
+        address _voter
+    ) external view returns (uint256) {
+        return _bremBadgerBalanceOf(_voter);
     }
 
     function acrossBalanceOf(address _voter) external view returns (uint256) {
@@ -220,6 +229,17 @@ contract BadgerVotingShare {
     }
 
     /*
+        The voter can also have bremBADGER
+    */
+    function _bremBadgerBalanceOf(
+        address _voter
+    ) internal view returns (uint256) {
+        uint256 remBadgerBalance = bremBadger.totalDeposited(_voter) -
+            bremBadger.totalClaimed(_voter);
+        return (remBadgerBalance * rem_badger.getPricePerFullShare()) / 1e18;
+    }
+
+    /*
         The voter may have deposited BADGER into the rari pool:
          * check current rate
          * balanceOf fBadger
@@ -323,6 +343,7 @@ contract BadgerVotingShare {
             _sushiswapBalanceOf(_voter) +
             _rariBalanceOf(_voter) +
             _remBadgerBalanceOf(_voter) +
+            _bremBadgerBalanceOf(_voter) +
             _acrossBalanceOf(_voter) +
             _curveBalanceOf(_voter) +
             _balancerBadgerWbtcBalanceOf(_voter) +
