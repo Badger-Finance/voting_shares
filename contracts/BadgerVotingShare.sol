@@ -40,10 +40,6 @@ contract BadgerVotingShare {
     IGeyser constant geyser_badger_wBTC_SLP =
         IGeyser(0xB5b654efBA23596Ed49FAdE44F7e67E23D6712e7);
 
-    // Rari pool - fBADGER-22
-    ICToken constant fBADGER =
-        ICToken(0x6780B4681aa8efE530d075897B3a4ff6cA5ed807);
-
     IBridgePool constant aBADGER =
         IBridgePool(0x43298F9f91a4545dF64748e78a2c777c580573d6);
 
@@ -102,10 +98,6 @@ contract BadgerVotingShare {
 
     function badgerBalanceOf(address _voter) external view returns (uint256) {
         return _badgerBalanceOf(_voter);
-    }
-
-    function rariBalanceOf(address _voter) external view returns (uint256) {
-        return _rariBalanceOf(_voter);
     }
 
     function remBadgerBalanceOf(
@@ -240,16 +232,6 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter may have deposited BADGER into the rari pool:
-         * check current rate
-         * balanceOf fBadger
-    */
-    function _rariBalanceOf(address _voter) internal view returns (uint256) {
-        uint256 rate = fBADGER.exchangeRateStored();
-        return (fBADGER.balanceOf(_voter) * rate) / 1e18;
-    }
-
-    /*
         The voter may have deposited BADGER into the across pool:
     */
     function _acrossBalanceOf(address _voter) internal view returns (uint256) {
@@ -341,7 +323,6 @@ contract BadgerVotingShare {
             _badgerBalanceOf(_voter) +
             _uniswapBalanceOf(_voter) +
             _sushiswapBalanceOf(_voter) +
-            _rariBalanceOf(_voter) +
             _remBadgerBalanceOf(_voter) +
             _bremBadgerBalanceOf(_voter) +
             _acrossBalanceOf(_voter) +
