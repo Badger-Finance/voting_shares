@@ -140,10 +140,6 @@ contract BadgerVotingShare {
         After adding all 3 balances we calculate how much BADGER it corresponds to using the pool's reserves.
     */
     function _uniswapBalanceOf(address _voter) internal view returns (uint256) {
-        uint256 total = badger_wBTC_UniV2.totalSupply();
-        if (total == 0) {
-            return 0;
-        }
         uint256 bUniV2PricePerShare = sett_badger_wBTC_UniV2
             .getPricePerFullShare();
         (, uint112 reserve1, ) = badger_wBTC_UniV2.getReserves();
@@ -153,7 +149,7 @@ contract BadgerVotingShare {
             (geyser_badger_wBTC_UniV2.totalStakedFor(_voter) *
                 bUniV2PricePerShare) /
             1e18;
-        return (totalUniBalance * reserve1) / total;
+        return (totalUniBalance * reserve1) / badger_wBTC_UniV2.totalSupply();
     }
 
     /*
