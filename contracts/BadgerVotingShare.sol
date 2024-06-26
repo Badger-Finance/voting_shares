@@ -11,6 +11,7 @@ import "./interfaces/ICurvePool.sol";
 import "./interfaces/ICurveToken.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IBalancerPoolToken.sol";
+import "./interfaces/IBremBadger.sol";
 
 contract BadgerVotingShare {
     IERC20 constant badger = IERC20(0x3472A5A71965499acd81997a54BBA8D852C6E53d);
@@ -20,6 +21,8 @@ contract BadgerVotingShare {
         IGeyser(0xa9429271a28F8543eFFfa136994c0839E7d7bF77);
     ISett constant rem_badger =
         ISett(0x6aF7377b5009d7d154F36FE9e235aE1DA27Aea22);
+    IBremBadger constant bremBadger =
+        IBremBadger(0x170D9fA0Cb0226f0d87952905228e5AA7323DdA6);
 
     //Badger is token1
     IUniswapV2Pair constant badger_wBTC_UniV2 =
@@ -36,10 +39,6 @@ contract BadgerVotingShare {
         ISett(0x1862A18181346EBd9EdAf800804f89190DeF24a5);
     IGeyser constant geyser_badger_wBTC_SLP =
         IGeyser(0xB5b654efBA23596Ed49FAdE44F7e67E23D6712e7);
-
-    // Rari pool - fBADGER-22
-    ICToken constant fBADGER =
-        ICToken(0x6780B4681aa8efE530d075897B3a4ff6cA5ed807);
 
     IBridgePool constant aBADGER =
         IBridgePool(0x43298F9f91a4545dF64748e78a2c777c580573d6);
@@ -101,14 +100,16 @@ contract BadgerVotingShare {
         return _badgerBalanceOf(_voter);
     }
 
-    function rariBalanceOf(address _voter) external view returns (uint256) {
-        return _rariBalanceOf(_voter);
-    }
-
     function remBadgerBalanceOf(
         address _voter
     ) external view returns (uint256) {
         return _remBadgerBalanceOf(_voter);
+    }
+
+    function bremBadgerBalanceOf(
+        address _voter
+    ) external view returns (uint256) {
+        return _bremBadgerBalanceOf(_voter);
     }
 
     function acrossBalanceOf(address _voter) external view returns (uint256) {
@@ -226,13 +227,14 @@ contract BadgerVotingShare {
     }
 
     /*
-        The voter may have deposited BADGER into the rari pool:
-         * check current rate
-         * balanceOf fBadger
+        The voter can also have bremBADGER
     */
-    function _rariBalanceOf(address _voter) internal view returns (uint256) {
-        uint256 rate = fBADGER.exchangeRateStored();
-        return (fBADGER.balanceOf(_voter) * rate) / 1e18;
+    function _bremBadgerBalanceOf(
+        address _voter
+    ) internal view returns (uint256) {
+        uint256 remBadgerBalance = bremBadger.totalDeposited(_voter) -
+            bremBadger.totalClaimed(_voter);
+        return (remBadgerBalance * rem_badger.getPricePerFullShare()) / 1e18;
     }
 
     /*
@@ -336,8 +338,8 @@ contract BadgerVotingShare {
             _badgerBalanceOf(_voter) +
             _uniswapBalanceOf(_voter) +
             _sushiswapBalanceOf(_voter) +
-            _rariBalanceOf(_voter) +
             _remBadgerBalanceOf(_voter) +
+            _bremBadgerBalanceOf(_voter) +
             _acrossBalanceOf(_voter) +
             _curveBalanceOf(_voter) +
             _balancerBadgerWbtcBalanceOf(_voter) +
